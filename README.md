@@ -1,47 +1,71 @@
-# 实验1：密码学基础练习
+# RSA_Attacks
+2016年全国高校密码数学挑战赛的赛题三——RSA加密体制破译
 
-## ex1.1-1.5 对应实验1的前5题
+RSA大礼包中存放原赛题数据
 
-### 1. 将十六进制转换为 Base64
-字符串为：
-49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d
+attacks文件夹下存放相关破解算法
 
-### 2. 固定异或运算
-编写一个函数，接收两个长度相等的缓冲区，并生成它们的异或组合结果。将 `1c0111001f010100061a024b53535009181c` 经过十六进制解码后，与以下字符串进行异或：
-`686974207468652062756c6c277320657965`
+调用 rsa_attacks.py 以运行
 
-### 3. 十六进制编码字符串：
-`1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736`
-该字符串已与单个字符进行异或加密。利用字符频率设计一套给英文明文片段评分的方法，对每一个解密输出进行评分，选出得分最高的结果，即可找出密钥，解密这条信息。
 
-### 4. 检测单字符异或加密
-文件中60个字符的字符串里，有一条采用单字符异或方式进行了加密。请找出这条字符串。
 
-### 5. 实现重复密钥异或加密
-Burning 'em, if you ain't quick and nimble
-I go crazy when I hear a cymbal
-使用密钥“ICE”，采用重复密钥异或算法对这段内容进行加密。在重复密钥异或加密中，按顺序依次使用密钥的每个字节；明文第一个字节与字母I进行异或运算，第二个字节与C异或，第三个与E异或，第四个字节再次循环使用I，以此类推。
+###  Attacks with single_key 
 
-## ex1.6 对应实验1的第6题
+**低加密指数攻击 (Small Crt Exp Attack)：** 利用中国剩余定理，现代密码学（杨波）P118
 
-### 6. 破解重复密钥异或加密
-文件先经过重复密钥异或加密，再进行了Base64编码。按以下步骤解密：
-① 设密钥长度为KEYSIZE，在2到40之间逐一尝试可能的取值。
-② 编写一个函数，计算两个字符串之间的汉明距离。
-③ 针对每一个猜测的密钥长度KEYSIZE，取出前两组各KEYSIZE长度的字节数据，计算二者的汉明距离，再将距离值除以KEYSIZE进行归一化处理。
-④ 归一化编辑距离最小的KEYSIZE，得到高概率的密钥长度。
-⑤ 确定密钥长度后，将密文切分成若干个长度为KEYSIZE的数据块。
-⑥ 对分块后的数据进行转置重组：把所有数据块的第一个字节拼成一个新块，所有数据块的第二个字节拼成一个新块，以此类推。
-⑦ 将每一个重组后的新块，都当作单字符异或加密的密文进行破解。
-⑧ 对每个转置分块，能生成最优字符分布特征的单字节异或密钥，就是对应位置的重复密钥字节。将所有位置的密钥字节拼接起来，即可得到完整密钥。
+```
+Frame 3 has a small exponent:5
+Frame 7 has a small exponent:3
+Frame 8 has a small exponent:5
+Frame 11 has a small exponent:3
+Frame 12 has a small exponent:5
+Frame 15 has a small exponent:3
+Frame 16 has a small exponent:5
+Frame 20 has a small exponent:5
+[b'\xb8\xbc\xa2S)s\xcd\xd2', b't is a f']
+exp3 ——> b'\xb8\xbc\xa2S)s\xcd\xd2'
+exp5 ——> b't is a f'
+```
 
-## ex1.7 对应实验1的第7题
+**费马分解 (Fermat Fac Attack)：**[CTF Wiki 模数相关攻击 |p-q|较小](https://ctf-wiki.org/crypto/asymmetric/rsa/rsa_module_attack/#p-q)
 
-### 7. 某监控系统 Web 服务器存在漏洞，导致管理员密码的 SHA1 哈希值泄露。
-已知管理员密码对应的 SHA1 哈希值为：67ae1a64661ac8b4494666f58c4822408dd0a3e4
-同时，登录终端键盘上存在明显指纹痕迹，如下图所示
-由于登录后仅通过方向键进行导航，因此带有指纹的按键极有可能构成管理员密码。
-此外注意使用德语键盘布局，要求通过程序恢复管理员原始密码。
+```
+Fermat Factorization Succeed! ——> Frame10
+[b'will get']
+```
 
-## ex9-16 对应实验2的第二大题
-## AES对应实验二的第一大题
+**Pollard p-1 Attack ：**[CTF Wiki 模数相关攻击 p-1光滑](https://ctf-wiki.org/crypto/asymmetric/rsa/rsa_module_attack/#p-1)
+
+```
+p of Frame2 is : 1719620105458406433483340568317543019584575635895742560438771105058321655238562613083979651479555788009994557822024565226932906295208262756822275663694111
+p of Frame6 is : 920724637201
+p of Frame19 is : 1085663496559
+[b' That is', b' "Logic ', b'instein.']
+```
+
+### Attacks with multi_keys
+
+**共模攻击（Common Modulus Attack）：**[CTF Wiki 模数相关攻击 共模攻击](https://ctf-wiki.org/crypto/asymmetric/rsa/rsa_module_attack/#_7)
+
+```
+Common Modulus Found! —— > Frame0 and Frame4
+[b'My secre']
+```
+
+**因数碰撞（Common Factor Attack）：**[CTF Wiki 模数相关攻击 模不互素](https://ctf-wiki.org/crypto/asymmetric/rsa/rsa_module_attack/#_5)
+
+```
+Common Factor Found! ——> Frame1 and Frame18
+[b'. Imagin', b'm A to B']
+```
+
+
+
+最终仍有5个Frame无法恢复，分别是5,9,13,14,17
+
+通过猜测获得最终明文：
+
+```
+"My secret is a famous saying of Albert Einstein. That is \"Logic will get you from A to B. Imagination will take you everywhere.\""
+```
+
